@@ -1,0 +1,13 @@
+{{- if .Values.vault.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "microservice-generic.fullname" . }}-vault-agent
+  labels:
+    {{- include "microservice-generic.labels" . | nindent 4 }}
+data:
+  config-init.hcl: |
+    {{- include "microservice-generic.vaultAgentConfig" (merge (dict "configInit" true) .) | indent 4 }}
+  config.hcl: |
+    {{- include "microservice-generic.vaultAgentConfig" (merge (dict "configInit" false) .) | indent 4 }}
+{{- end }}

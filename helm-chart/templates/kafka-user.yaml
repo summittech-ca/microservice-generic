@@ -1,0 +1,26 @@
+{{- if and .Values.dataSources.kafka.enabled .Values.dataSources.kafka.clusterName }}
+  {{- range .Values.dataSources.kafka.users }}
+apiVersion: kafka.strimzi.io/v1beta1
+kind: KafkaUser
+metadata:
+  name: {{ required "name is required" .name }}
+  labels:
+    strimzi.io/cluster: {{ $.Values.dataSources.kafka.clusterName }}
+spec:
+  authentication:
+    type: scram-sha-512
+  {{- if .authorization.acls }}
+  authorization:
+    type: simple
+    acls:
+      {{- range .authorization.acls }}
+      - resource:
+          type: {{ required "resource.type is required" .resource.type }}
+          name: {{ .resource.name }}
+          patternType: {{ default "literal" .resource.patternType }}
+        operation: {{ required "resource.operation is required" .operation }}
+        host: {{ default "*" .host | quote }}
+      {{- end }}
+  {{- end }}
+  {{- end }}
+{{- end }}

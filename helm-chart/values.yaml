@@ -1,0 +1,134 @@
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+  args: []
+  command: []
+  extraEnv: []
+    # - name: FOO
+    #   value: "bar"
+  debug: false
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+configMap: {}
+configPath: /conf
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  annotations: {}
+  # The name of the service to use.
+  # If not set, a name is generated using the fullname template
+  name: ""
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 80
+
+# dnsPolicy: "None"
+dnsConfig: {}
+  # nameservers:
+  #   - 1.2.3.4
+  # searches:
+  #   - ns1.svc.cluster-domain.example
+  #   - my.dns.search.suffix
+  # options:
+  #   - name: ndots
+  #     value: "2"
+  #   - name: edns0
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+livenessProbe:
+  enabled: false
+  # httpGet: {}
+
+readinessProbe:
+  enabled: false
+  # httpGet: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+dataSources:
+  databases: []
+
+  kafka:
+    enabled: false
+    # clusterName: "my-cluster"
+    # topics:
+    #   - name: my-topic
+    #     partitions: 1
+    #     replicas: 1
+    #     config:
+    #       retention.ms: 604800000
+    #       segment.bytes: 1073741824
+    # users:
+    #   - name: my-user
+    #     authorization:
+    #       acls:
+    #         - resource:
+    #             type: topic
+    #             name: my-topic
+    #             patternType: literal
+    #           operation: Read
+    #           host: "*"
+
+vault:
+  enabled: false
+  address: http://vault.vault.svc:8200
+  # If not set, a name is generated using the fullname template
+  role: ""
+  # If not set, a path is generated using the fullname template
+  secretPath: ""
+
+vaultAgent:
+  config:
+    templateType: ""

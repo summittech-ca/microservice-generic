@@ -1,0 +1,174 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "microservice-generic.fullname" . }}
+  labels:
+    {{- include "microservice-generic.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "microservice-generic.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- include "microservice-generic.podAnnotations" . | nindent 8 }}
+      labels:
+        {{- include "microservice-generic.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "microservice-generic.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.configMap }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "microservice-generic.fullname" . }}
+      {{- end }}
+      containers:
+        - name: {{ include "microservice-generic.fullname" . }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.image.args }}
+          args:
+            {{- range .Values.image.args }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.image.command }}
+          command:
+            {{- range .Values.image.command }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          env:
+            {{- if .Values.image.debug }}
+            - name: DEBUG
+              value: {{ .Values.image.debug | quote }}
+            {{- end }}
+            {{- if .Values.vault.enabled }}
+            - name: VAULT_ADDR
+              value: {{ .Values.vault.address }}
+            - name: VAULT_SECRET_PATH
+              value: {{ include "microservice-generic.vaultSecretPath" . }}
+            {{- end }}
+            {{- with .Values.image.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            {{- range .Values.service.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .targetPort }}
+              protocol: TCP
+            {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .Values.livenessProbe.httpGet }}
+            httpGet:
+              port: {{ default "http" .Values.livenessProbe.httpGet.port }}
+              path: {{ default "/" .Values.livenessProbe.httpGet.path }}
+              {{- with .Values.livenessProbe.httpGet.httpHeaders }}
+              httpHeaders:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+            {{- end }}
+            {{- if .Values.livenessProbe.tcpSocket }}
+            tcpSocket:
+              port: {{ default "tcp" .Values.livenessProbe.tcpSocket.port }}
+            {{- end }}
+            {{- if .Values.livenessProbe.exec }}
+            {{- with .Values.livenessProbe.exec.command }}
+            exec:
+              command:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.livenessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ . }}
+            {{- end }}
+            {{- with .Values.livenessProbe.periodSeconds }}
+            periodSeconds: {{ . }}
+            {{- end }}
+            {{- with .Values.livenessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ . }}
+            {{- end }}
+            {{- with .Values.livenessProbe.successThreshold }}
+            successThreshold: {{ . }}
+            {{- end }}
+            {{- with .Values.livenessProbe.failureThreshold }}
+            failureThreshold: {{ . }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .Values.readinessProbe.httpGet }}
+            httpGet:
+              port: {{ default "http" .Values.readinessProbe.httpGet.port }}
+              path: {{ default "/" .Values.readinessProbe.httpGet.path }}
+              {{- with .Values.readinessProbe.httpGet.httpHeaders }}
+              httpHeaders:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+            {{- end }}
+            {{- if .Values.readinessProbe.tcpSocket }}
+            tcpSocket:
+              port: {{ default "tcp" .Values.readinessProbe.tcpSocket.port }}
+            {{- end }}
+            {{- if .Values.readinessProbe.exec }}
+            {{- with .Values.readinessProbe.exec.command }}
+            exec:
+              command:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.readinessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ . }}
+            {{- end }}
+            {{- with .Values.readinessProbe.periodSeconds }}
+            periodSeconds: {{ . }}
+            {{- end }}
+            {{- with .Values.readinessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ . }}
+            {{- end }}
+            {{- with .Values.readinessProbe.successThreshold }}
+            successThreshold: {{ . }}
+            {{- end }}
+            {{- with .Values.readinessProbe.failureThreshold }}
+            failureThreshold: {{ . }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.configMap }}
+          volumeMounts:
+            - name: config
+              readOnly: true
+              mountPath: {{ .Values.configPath }}
+          {{- end }}
+      {{- with .Values.dnsPolicy }}
+      dnsPolicy: {{ . }}
+      {{- end }}
+      {{- with .Values.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,17 @@
+{{- if and .Values.dataSources.kafka.enabled .Values.dataSources.kafka.clusterName }}
+  {{- range .Values.dataSources.kafka.topics }}
+apiVersion: kafka.strimzi.io/v1beta1
+kind: KafkaTopic
+metadata:
+  name: {{ required "name is required" .name }}
+  labels:
+    strimzi.io/cluster: {{ $.Values.dataSources.kafka.clusterName }}
+spec:
+  partitions: {{ default 1 .partitions }}
+  replicas: {{ default 1 .replicas }}
+  {{- with .config }}
+  config:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }}
